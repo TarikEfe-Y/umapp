@@ -1,36 +1,80 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>OpenStreetMap Basit Harita</title>
+    <title>OpenStreetMap + Firebase</title>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- OpenStreetMap Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+      const firebaseURL = "https://navigasyon-ffc0c-default-rtdb.firebaseio.com/locations.json";
+
+      let map;
+      let markers = {}; // Eklenen markerları takip etmek için obje
+
+      function initMap() {
+        map = L.map("map").setView([39.92, 32.85], 6); // Türkiye merkezli başlat
+
+        // OpenStreetMap katmanı ekle
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap contributors",
+        }).addTo(map);
+
+        // Firebase'den verileri al ve haritayı güncelle
+        fetchLocations();
+      }
+
+      function fetchLocations() {
+        fetch(firebaseURL)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data) {
+              Object.keys(data).forEach((key) => {
+                let latitude = data[key].latitude;
+                let longitude = data[key].longitude;
+
+                // Marker zaten eklenmişse tekrar ekleme
+                if (!markers[key]) {
+                  markers[key] = L.marker([latitude, longitude])
+                    .addTo(map)
+                    .bindPopup(`Konum: ${latitude}, ${longitude}`);
+                }
+              });
+            }
+          })
+          .catch((error) => console.error("Firebase verisi alınamadı:", error));
+      }
+
+      function sendLocation() {
+        navigator.geolocation.getCurrentPosition((position) => {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+
+          const newLocation = { latitude, longitude };
+
+          fetch(firebaseURL.replace(".json", "") + "/locations.json", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newLocation),
+          })
+            .then((response) => response.json())
+            .then(() => {
+              console.log("Konum Firebase'e eklendi.");
+              fetchLocations(); // Yeni verileri çek
+            })
+            .catch((error) => console.error("Firebase'e veri gönderilemedi:", error));
+        });
+      }
+    </script>
     <style>
-      /* Harita Alanı */
       #map {
         height: 500px;
         width: 100%;
       }
     </style>
   </head>
-  <body>
-    <h1>OpenStreetMap Basit Harita</h1>
+  <body onload="initMap()">
+    <h1>OpenStreetMap + Firebase</h1>
+    <button onclick="sendLocation()">Konumumu Paylaş</button>
     <div id="map"></div>
-
-    <!-- OpenStreetMap Leaflet JS -->
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-    <script>
-      // Haritayı başlat
-      var map = L.map("map").setView([39.92, 32.85], 6); // Türkiye merkezi
-
-      // Harita katmanını ekle
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(map);
-    </script>
   </body>
 </html>

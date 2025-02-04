@@ -1,43 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-    <title>Firebase Harita</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>uMap + Firebase</title>
+    <!-- uMap CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
         #map {
             width: 100%;
-            height: 100vh;
+            height: 100vh; /* Tam ekran harita */
         }
     </style>
 </head>
 <body>
+    <!-- Harita için div -->
     <div id="map"></div>
-    
+
+    <!-- uMap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <!-- Firebase JS -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
     <script>
         // 🔥 Firebase Konfigürasyonu
         const firebaseConfig = {
-            apiKey: "FIREBASE_API_KEY",
-            authDomain: "FIREBASE_AUTH_DOMAIN",
-            databaseURL: "https://YOUR_DATABASE.firebaseio.com",
-            projectId: "FIREBASE_PROJECT_ID",
-            storageBucket: "FIREBASE_STORAGE_BUCKET",
-            messagingSenderId: "FIREBASE_MESSAGING_SENDER_ID",
-            appId: "FIREBASE_APP_ID"
+            apiKey: "AIzaSyC35m5nbt3el3FNfKdwCBGm9Sgq_jPg0eQ",
+            authDomain: "navigasyon-ffc0c.firebaseapp.com",
+            databaseURL: "https://navigasyon-ffc0c-default-rtdb.firebaseio.com",
+            projectId: "navigasyon-ffc0c",
+            storageBucket: "navigasyon-ffc0c.firebasestorage.app",
+            messagingSenderId: "361693401199",
+            appId: "1:361693401199:web:57acf604aa2458f4e13d9a"
         };
 
         // Firebase Başlat
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // 🌍 Haritayı Başlat
+        // 🌍 uMap Haritasını Başlat
         let map;
         function initMap() {
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 39.9334, lng: 32.8597 }, // Ankara merkez
-                zoom: 6
-            });
+            // Haritayı oluştur (Türkiye merkezli)
+            map = L.map('map').setView([39.9334, 32.8597], 6);
+
+            // OpenStreetMap katmanı ekle
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
 
             // 📡 Firebase'den Verileri Dinle
             database.ref("locations").on("value", (snapshot) => {
@@ -56,23 +71,35 @@
         }
 
         let markers = [];
-        
+
         // 📌 Marker Ekleme Fonksiyonu
         function addMarker(lat, lng, type) {
-            const color = type === "erzak" ? "red" : "blue"; // Erzak = Kırmızı, Malzeme = Mavi
-            const marker = new google.maps.Marker({
-                position: { lat, lng },
-                map,
-                title: type,
-                icon: `http://maps.google.com/mapfiles/ms/icons/${color}-dot.png`
+            // Marker rengini type'a göre belirle
+            const color = type === "erzak" ? "red" : "blue";
+
+            // Marker ikonu oluştur
+            const icon = L.icon({
+                iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                iconSize: [25, 41], // İkon boyutu
+                iconAnchor: [12, 41], // İkonun konumu
+                popupAnchor: [1, -34], // Popup'ın konumu
+                shadowSize: [41, 41] // Gölge boyutu
             });
 
+            // Marker'ı haritaya ekle
+            const marker = L.marker([lat, lng], { icon }).addTo(map);
+
+            // Marker'a tıklandığında type bilgisini göster
+            marker.bindPopup(`<b>${type}</b>`);
+
+            // Marker'ı markers dizisine ekle
             markers.push(marker);
         }
 
         // 📌 Haritayı Temizle
         function clearMarkers() {
-            markers.forEach(marker => marker.setMap(null));
+            markers.forEach(marker => map.removeLayer(marker));
             markers = [];
         }
 

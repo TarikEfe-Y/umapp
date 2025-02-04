@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>OpenStreetMap + Firebase</title>
+    <title>OpenStreetMap + Firebase Realtime</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -9,7 +9,7 @@
       const firebaseURL = "https://navigasyon-ffc0c-default-rtdb.firebaseio.com/locations.json";
 
       let map;
-      let markers = {}; // Eklenen markerları takip etmek için obje
+      let markers = {}; // Firebase'deki markerları takip etmek için obje
 
       function initMap() {
         map = L.map("map").setView([39.92, 32.85], 6); // Türkiye merkezli başlat
@@ -19,8 +19,16 @@
           attribution: "© OpenStreetMap contributors",
         }).addTo(map);
 
-        // Firebase'den verileri al ve haritayı güncelle
+        // Firebase'deki verileri al
         fetchLocations();
+
+        // Haritaya tıklayınca marker ekleyip Firebase'e gönderme
+        map.on("click", function (e) {
+          const latitude = e.latlng.lat;
+          const longitude = e.latlng.lng;
+          addMarker(latitude, longitude);
+          sendLocation(latitude, longitude);
+        });
       }
 
       function fetchLocations() {
@@ -32,7 +40,7 @@
                 let latitude = data[key].latitude;
                 let longitude = data[key].longitude;
 
-                // Marker zaten eklenmişse tekrar ekleme
+                // Eğer marker zaten eklenmişse tekrar ekleme
                 if (!markers[key]) {
                   markers[key] = L.marker([latitude, longitude])
                     .addTo(map)
@@ -44,25 +52,26 @@
           .catch((error) => console.error("Firebase verisi alınamadı:", error));
       }
 
-      function sendLocation() {
-        navigator.geolocation.getCurrentPosition((position) => {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
+      function sendLocation(latitude, longitude) {
+        const newLocation = { latitude, longitude };
 
-          const newLocation = { latitude, longitude };
-
-          fetch(firebaseURL.replace(".json", "") + "/locations.json", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(newLocation),
+        fetch(firebaseURL.replace(".json", "") + "/locations.json", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newLocation),
+        })
+          .then((response) => response.json())
+          .then(() => {
+            console.log("Konum Firebase'e eklendi.");
+            fetchLocations(); // Yeni verileri çek
           })
-            .then((response) => response.json())
-            .then(() => {
-              console.log("Konum Firebase'e eklendi.");
-              fetchLocations(); // Yeni verileri çek
-            })
-            .catch((error) => console.error("Firebase'e veri gönderilemedi:", error));
-        });
+          .catch((error) => console.error("Firebase'e veri gönderilemedi:", error));
+      }
+
+      function addMarker(latitude, longitude) {
+        let marker = L.marker([latitude, longitude]).addTo(map)
+          .bindPopup(`Konum: ${latitude}, ${longitude}`)
+          .openPopup();
       }
     </script>
     <style>
@@ -73,8 +82,10 @@
     </style>
   </head>
   <body onload="initMap()">
-    <h1>OpenStreetMap + Firebase</h1>
-    <button onclick="sendLocation()">Konumumu Paylaş</button>
+    <h1>OpenStreetMap + Firebase Realtime</h1>
+    <button onclick="navigator.geolocation.getCurrentPosition((position) => sendLocation(position.coords.latitude, position.coords.longitude))">
+      Konumumu Paylaş
+    </button>
     <div id="map"></div>
   </body>
 </html>

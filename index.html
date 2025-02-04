@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>uMap Marker Ekleme</title>
+    <title>uMap Ankara Marker</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <style>
@@ -12,28 +12,19 @@
     </style>
 </head>
 <body>
-    <h1>uMap Marker Ekleme</h1>
+    <h1>uMap Ankara Marker</h1>
     <div id="map"></div>
 
     <script>
-        // 🌍 uMap haritasını başlatma
-        var map = L.map("map").setView([39.9334, 32.8597], 6); // Ankara merkez
-
-        // uMap verisini yükleyen tile layer
+        // 🌍 Harita Başlat
+        var map = L.map("map").setView([39.9334, 32.8597], 10); // Ankara merkez
         L.tileLayer("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", {
             attribution: "&copy; OpenStreetMap contributors, uMap"
         }).addTo(map);
 
-        // 🖱️ Haritaya tıklanınca marker ekleme
-        map.on("click", function (e) {
-            var latitude = e.latlng.lat;
-            var longitude = e.latlng.lng;
-
-            // Yeni marker oluştur ve haritaya ekle
-            L.marker([latitude, longitude]).addTo(map)
-                .bindPopup("Lat: " + latitude + "<br>Lng: " + longitude)
-                .openPopup();
-        });
+        // 📍 Ankara'ya Marker Ekle
+        L.marker([39.9334, 32.8597]).addTo(map)
+            .bindPopup("📍 Ankara");
     </script>
 </body>
 </html>

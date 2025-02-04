@@ -1,26 +1,83 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>uMap Harita</title>
+    <title>Firebase Harita</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
     <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
         #map {
             width: 100%;
             height: 100vh;
-            border: none;
         }
     </style>
 </head>
 <body>
+    <div id="map"></div>
+    
+    <script>
+        // 🔥 Firebase Konfigürasyonu
+        const firebaseConfig = {
+            apiKey: "FIREBASE_API_KEY",
+            authDomain: "FIREBASE_AUTH_DOMAIN",
+            databaseURL: "https://YOUR_DATABASE.firebaseio.com",
+            projectId: "FIREBASE_PROJECT_ID",
+            storageBucket: "FIREBASE_STORAGE_BUCKET",
+            messagingSenderId: "FIREBASE_MESSAGING_SENDER_ID",
+            appId: "FIREBASE_APP_ID"
+        };
 
-    <!-- Harita iframe -->
-    <iframe id="map" src="https://umap.openstreetmap.fr/en/map/haritanizin-idsi_12345" allowfullscreen></iframe>
+        // Firebase Başlat
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
+        // 🌍 Haritayı Başlat
+        let map;
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 39.9334, lng: 32.8597 }, // Ankara merkez
+                zoom: 6
+            });
+
+            // 📡 Firebase'den Verileri Dinle
+            database.ref("locations").on("value", (snapshot) => {
+                const data = snapshot.val();
+                if (!data) return;
+
+                // 📌 Haritadaki Markerları Temizle
+                clearMarkers();
+
+                // 📍 Gelen Her Veri İçin Yeni Marker Ekle
+                Object.keys(data).forEach((key) => {
+                    const location = data[key];
+                    addMarker(location.latitude, location.longitude, location.type);
+                });
+            });
+        }
+
+        let markers = [];
+        
+        // 📌 Marker Ekleme Fonksiyonu
+        function addMarker(lat, lng, type) {
+            const color = type === "erzak" ? "red" : "blue"; // Erzak = Kırmızı, Malzeme = Mavi
+            const marker = new google.maps.Marker({
+                position: { lat, lng },
+                map,
+                title: type,
+                icon: `http://maps.google.com/mapfiles/ms/icons/${color}-dot.png`
+            });
+
+            markers.push(marker);
+        }
+
+        // 📌 Haritayı Temizle
+        function clearMarkers() {
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+        }
+
+        // Haritayı Başlat
+        window.onload = initMap;
+    </script>
 </body>
 </html>

@@ -1,91 +1,77 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>OpenStreetMap + Firebase Realtime</title>
+<head>
+    <title>Gerçek Zamanlı Firebase Harita</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script>
-      const firebaseURL = "https://navigasyon-ffc0c-default-rtdb.firebaseio.com/locations.json";
-
-      let map;
-      let markers = {}; // Firebase'deki markerları takip etmek için obje
-
-      function initMap() {
-        map = L.map("map").setView([39.92, 32.85], 6); // Türkiye merkezli başlat
-
-        // OpenStreetMap katmanı ekle
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "© OpenStreetMap contributors",
-        }).addTo(map);
-
-        // Firebase'deki verileri al
-        fetchLocations();
-
-        // Haritaya tıklayınca marker ekleyip Firebase'e gönderme
-        map.on("click", function (e) {
-          const latitude = e.latlng.lat;
-          const longitude = e.latlng.lng;
-          addMarker(latitude, longitude);
-          sendLocation(latitude, longitude);
-        });
-      }
-
-      function fetchLocations() {
-        fetch(firebaseURL)
-          .then((response) => response.json())
-          .then((data) => {
-            if (data) {
-              Object.keys(data).forEach((key) => {
-                let latitude = data[key].latitude;
-                let longitude = data[key].longitude;
-
-                // Eğer marker zaten eklenmişse tekrar ekleme
-                if (!markers[key]) {
-                  markers[key] = L.marker([latitude, longitude])
-                    .addTo(map)
-                    .bindPopup(`Konum: ${latitude}, ${longitude}`);
-                }
-              });
-            }
-          })
-          .catch((error) => console.error("Firebase verisi alınamadı:", error));
-      }
-
-      function sendLocation(latitude, longitude) {
-        const newLocation = { latitude, longitude };
-
-        fetch(firebaseURL.replace(".json", "") + "/locations.json", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newLocation),
-        })
-          .then((response) => response.json())
-          .then(() => {
-            console.log("Konum Firebase'e eklendi.");
-            fetchLocations(); // Yeni verileri çek
-          })
-          .catch((error) => console.error("Firebase'e veri gönderilemedi:", error));
-      }
-
-      function addMarker(latitude, longitude) {
-        let marker = L.marker([latitude, longitude]).addTo(map)
-          .bindPopup(`Konum: ${latitude}, ${longitude}`)
-          .openPopup();
-      }
-    </script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-      #map {
-        height: 500px;
-        width: 100%;
-      }
+        #map { 
+            height: 100vh; 
+            width: 100vw; 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+        }
     </style>
-  </head>
-  <body onload="initMap()">
-    <h1>OpenStreetMap + Firebase Realtime</h1>
-    <button onclick="navigator.geolocation.getCurrentPosition((position) => sendLocation(position.coords.latitude, position.coords.longitude))">
-      Konumumu Paylaş
-    </button>
+</head>
+<body>
+
     <div id="map"></div>
-  </body>
+
+    <script>
+        // Firebase yapılandırması
+        var firebaseConfig = {
+            apiKey: "AIzaSyC35m5nbt3el3FNfKdwCBGm9Sgq_jPg0eQ",
+            authDomain: "navigasyon-ffc0c.firebaseapp.com",
+            databaseURL: "https://navigasyon-ffc0c-default-rtdb.firebaseio.com",
+            projectId: "navigasyon-ffc0c",
+            storageBucket: "navigasyon-ffc0c.firebasestorage.app",
+            messagingSenderId: "361693401199",
+            appId: "1:361693401199:web:57acf604aa2458f4e13d9a"
+        };
+
+        // Firebase başlatma
+        firebase.initializeApp(firebaseConfig);
+        var database = firebase.database();
+
+        // Harita başlatma
+        var map = L.map("map").setView([39.92, 32.85], 13);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+
+        var markers = {}; // Markerları saklamak için obje
+
+        // Firebase'den gelen verileri dinle ve gerçek zamanlı güncelle
+        database.ref("markers").on("value", function(snapshot) {
+            // Eski markerları temizle
+            for (var key in markers) {
+                map.removeLayer(markers[key]);
+            }
+            markers = {}; // Listeyi sıfırla
+
+            // Yeni verileri ekle
+            snapshot.forEach(function(childSnapshot) {
+                var data = childSnapshot.val();
+                var lat = data.latitude;
+                var lng = data.longitude;
+                var type = data.type; // "erzak" veya "malzeme"
+
+                var markerColor = type === "erzak" ? "red" : "blue";
+
+                var marker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: "custom-marker",
+                        html: `<div style="background-color:${markerColor}; width: 20px; height: 20px; border-radius: 50%;"></div>`,
+                        iconSize: [20, 20]
+                    })
+                }).addTo(map).bindPopup("Tür: " + type);
+
+                markers[childSnapshot.key] = marker; // Markerları takip et
+            });
+        });
+    </script>
+
+</body>
 </html>

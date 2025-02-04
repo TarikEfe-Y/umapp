@@ -1,36 +1,54 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>OpenStreetMap Basit Harita</title>
+    <title>OpenStreetMap with Firebase</title>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- OpenStreetMap Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+      // Firebase URL'nizi buraya yazın (Realtime Database URL)
+      const firebaseURL = "https://navigasyon-ffc0c-default-rtdb.firebaseio.com/locations.json";
+
+      // Haritayı başlat
+      let map;
+
+      function initMap() {
+        map = L.map("map").setView([39.92, 32.85], 6); // Türkiye merkezli başlat
+
+        // OpenStreetMap katmanı ekle
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap contributors",
+        }).addTo(map);
+
+        // Firebase'den verileri al
+        fetch(firebaseURL)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data) {
+              Object.keys(data).forEach((key) => {
+                let latitude = data[key].latitude;
+                let longitude = data[key].longitude;
+
+                // Haritaya marker ekle
+                L.marker([latitude, longitude])
+                  .addTo(map)
+                  .bindPopup(`Konum: ${latitude}, ${longitude}`)
+                  .openPopup();
+              });
+            }
+          })
+          .catch((error) => console.error("Firebase verisi alınamadı:", error));
+      }
+    </script>
     <style>
-      /* Harita Alanı */
       #map {
         height: 500px;
         width: 100%;
       }
     </style>
   </head>
-  <body>
-    <h1>OpenStreetMap Basit Harita</h1>
+  <body onload="initMap()">
+    <h1>OpenStreetMap + Firebase</h1>
     <div id="map"></div>
-
-    <!-- OpenStreetMap Leaflet JS -->
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-    <script>
-      // Haritayı başlat
-      var map = L.map("map").setView([39.92, 32.85], 6); // Türkiye merkezi
-
-      // Harita katmanını ekle
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(map);
-    </script>
   </body>
 </html>

@@ -3,18 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firebase uMap</title>
+    <title>Basit Harita</title>
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-    
-    <!-- Leaflet (uMap) Kütüphanesi -->
+    <!-- Leaflet Harita Kütüphanesi -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     
     <style>
-        /* Sayfa ve Harita CSS Ayarları */
+        /* Sayfa ve Harita Ayarları */
         html, body {
             height: 100%;
             margin: 0;
@@ -28,87 +24,17 @@
 </head>
 <body>
 
-    <!-- Harita Alanı -->
+    <!-- Harita Divi -->
     <div id="map"></div>
 
     <script>
-        // 🔥 Firebase Konfigürasyonu
-        const firebaseConfig = {
-            apiKey: "AIzaSyC35m5nbt3el3FNfKdwCBGm9Sgq_jPg0eQ",
-            authDomain: "navigasyon-ffc0c.firebaseapp.com",
-            databaseURL: "https://navigasyon-ffc0c-default-rtdb.firebaseio.com",
-            projectId: "navigasyon-ffc0c",
-            storageBucket: "navigasyon-ffc0c.firebasestorage.app",
-            messagingSenderId: "361693401199",
-            appId: "1:361693401199:web:57acf604aa2458f4e13d9a"
-        };
-
-        // Firebase Başlat
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
-        // 🌍 Harita Değişkenleri
-        let map;
-        let markers = [];
-
         // 🌍 Haritayı Başlat
-        function initMap() {
-            // Eğer harita div'i bulunamazsa hata ver
-            if (!document.getElementById('map')) {
-                console.error("Harita divi bulunamadı!");
-                return;
-            }
+        let map = L.map('map').setView([39.9334, 32.8597], 6); // Ankara merkez
 
-            // Leaflet Haritasını Başlat
-            map = L.map('map').setView([39.9334, 32.8597], 6); // Ankara merkez
-
-            // OpenStreetMap Katmanı
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
-
-            // 📡 Firebase'den Verileri Dinle
-            database.ref("locations").on("value", (snapshot) => {
-                const data = snapshot.val();
-                if (!data) return;
-
-                // 📌 Haritadaki Markerları Temizle
-                clearMarkers();
-
-                // 📍 Yeni Markerları Ekle
-                Object.keys(data).forEach((key) => {
-                    const location = data[key];
-                    addMarker(location.latitude, location.longitude, location.type);
-                });
-            });
-        }
-
-        // 📌 Marker Ekleme Fonksiyonu
-        function addMarker(lat, lng, type) {
-            // Marker Renklerini Belirle
-            const color = type === "erzak" ? "red" : "blue"; // Erzak = Kırmızı, Malzeme = Mavi
-            const marker = L.marker([lat, lng], {
-                icon: L.icon({
-                    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34],
-                    shadowSize: [41, 41]
-                })
-            }).addTo(map)
-              .bindPopup(`<b>Tür:</b> ${type}<br><b>Koordinatlar:</b> ${lat}, ${lng}`);
-
-            markers.push(marker);
-        }
-
-        // 📌 Haritadaki Markerları Temizleme Fonksiyonu
-        function clearMarkers() {
-            markers.forEach(marker => map.removeLayer(marker));
-            markers = [];
-        }
-
-        // Haritayı Başlat
-        window.onload = initMap;
+        // OpenStreetMap Katmanı
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
     </script>
 
 </body>

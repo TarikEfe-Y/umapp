@@ -45,6 +45,9 @@
                   markers[key] = L.marker([latitude, longitude])
                     .addTo(map)
                     .bindPopup(`Konum: ${latitude}, ${longitude}`);
+                     // Her 5 saniyede bir Firebase’den verileri çek
+                     setInterval(fetchLocations, 5000);
+
                 }
               });
             }

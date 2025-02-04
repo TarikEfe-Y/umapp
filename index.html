@@ -3,14 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Basit Harita</title>
-    
-    <!-- Leaflet Harita Kütüphanesi -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    
+    <title>uMap Harita</title>
     <style>
-        /* Sayfa ve Harita Ayarları */
         html, body {
             height: 100%;
             margin: 0;
@@ -19,23 +13,14 @@
         #map {
             width: 100%;
             height: 100vh;
+            border: none;
         }
     </style>
 </head>
 <body>
 
-    <!-- Harita Divi -->
-    <div id="map"></div>
-
-    <script>
-        // 🌍 Haritayı Başlat
-        let map = L.map('map').setView([39.9334, 32.8597], 6); // Ankara merkez
-
-        // OpenStreetMap Katmanı
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-    </script>
+    <!-- Harita iframe -->
+    <iframe id="map" src="https://umap.openstreetmap.fr/en/map/haritanizin-idsi_12345" allowfullscreen></iframe>
 
 </body>
 </html>
